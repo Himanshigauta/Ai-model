@@ -339,7 +339,6 @@ if submit:
                                         break
                                         
                                 maps_url = f"https://www.google.com/maps/search/{r_name.replace(' ', '+')}+{r_location.replace(' ', '+')}"
-                                uber_url = f"uber://?action=setPickup&pickup=my_location&dropoff[nickname]={r_name.replace(' ', '%20')}"
                                 
                                 all_cards_html += f"""
                                 <div class="recommendation-card">
@@ -357,8 +356,7 @@ if submit:
                                     </div>
                                     <div class="card-actions">
                                         <a href="{maps_url}" target="_blank" class="action-btn btn-maps">📍 Open in Maps</a>
-                                        <a href="{uber_url}" class="action-btn btn-outline" style="flex: 0.6;">Uber</a>
-                                        <a href="{url}" target="_blank" class="action-btn btn-outline" style="flex: 0.6;">Menu</a>
+                                        <a href="{url}" target="_blank" class="action-btn btn-outline">View Menu</a>
                                     </div>
                                 </div>
                                 """
