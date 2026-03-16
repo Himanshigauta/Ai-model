@@ -290,7 +290,7 @@ if submit:
                     cuisine=cuisine if cuisine else None,
                     max_price=max_price,
                     min_rating=float(min_rating),
-                    top_n=5
+                    top_n=8
                 )
                 retrieved_docs = df.to_dict('records')
                 
