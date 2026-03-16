@@ -304,57 +304,73 @@ if submit:
                 prompt = construct_prompt(user_prefs, retrieved_docs)
                 response_text = generate_recommendation(prompt)
                 
+                # Clean LLM response (strip markdown codes if present)
+                if "```json" in response_text:
+                    response_text = response_text.split("```json")[1].split("```")[0].strip()
+                elif "```" in response_text:
+                    response_text = response_text.split("```")[1].split("```")[0].strip()
+                
                 if response_text.startswith("Error:"):
                     st.error(response_text)
                 else:
-                    llm_json = json.loads(response_text)
-                    st.markdown(f'<div style="font-size: 1.1em; margin-bottom: 25px; color: #EAEAEA;">{llm_json.get("intro", "")}</div>', unsafe_allow_html=True)
-                    
-                    ai_restaurants = llm_json.get("restaurants", [])
-                    if ai_restaurants:
-                        html_blocks = ['<div class="card-container">']
-                        for ai_rec in ai_restaurants:
-                            r_name = ai_rec.get("name", "Restaurant")
-                            reason = ai_rec.get("reason", "")
-                            r_rating = ai_rec.get("rating", "4.0")
-                            r_cost = ai_rec.get("cost", "1000")
-                            r_location = ai_rec.get("location", place if place else "Bangalore")
-                            r_cuisine = ai_rec.get("cuisine", cuisine if cuisine else "Multi-Cuisine")
+                    try:
+                        llm_json = json.loads(response_text)
+                        
+                        st.markdown(f'<div style="font-size: 1.1em; margin-bottom: 25px; color: #EAEAEA;">{llm_json.get("intro", "")}</div>', unsafe_allow_html=True)
+                        
+                        ai_restaurants = llm_json.get("restaurants", [])
+                        if ai_restaurants:
+                            # Use a single block to ensure and style remains consistent
+                            all_cards_html = ""
+                            for ai_rec in ai_restaurants:
+                                # Detailed Premium Card Component
+                                r_name = ai_rec.get("name", "Restaurant")
+                                reason = ai_rec.get("reason", "")
+                                r_rating = ai_rec.get("rating", "4.0")
+                                r_cost = ai_rec.get("cost", "1000")
+                                r_location = ai_rec.get("location", place if place else "Bangalore")
+                                r_cuisine = ai_rec.get("cuisine", cuisine if cuisine else "Multi-Cuisine")
+                                
+                                # Match URL from DB
+                                url = "#"
+                                for db_rest in retrieved_docs:
+                                    if r_name.lower() in db_rest.get("name", "").lower():
+                                        url = db_rest.get("url", "#")
+                                        break
+                                        
+                                maps_url = f"https://www.google.com/maps/search/{r_name.replace(' ', '+')}+{r_location.replace(' ', '+')}"
+                                uber_url = f"uber://?action=setPickup&pickup=my_location&dropoff[nickname]={r_name.replace(' ', '%20')}"
+                                
+                                all_cards_html += f"""
+                                <div class="recommendation-card">
+                                    <div class="card-header">
+                                        <h3>{r_name}</h3>
+                                        <div class="card-meta">{r_location} • {r_cuisine}</div>
+                                    </div>
+                                    <div class="card-stats">
+                                        <div class="stat-badge">⭐ {r_rating}</div>
+                                        <div class="stat-price">Approx ₹{r_cost} for two</div>
+                                    </div>
+                                    <div class="ai-why-section">
+                                        <span class="ai-why-label">AI WHY</span>
+                                        <div class="ai-why-text">{reason}</div>
+                                    </div>
+                                    <div class="card-actions">
+                                        <a href="{maps_url}" target="_blank" class="action-btn btn-maps">📍 Open in Maps</a>
+                                        <a href="{uber_url}" class="action-btn btn-outline" style="flex: 0.6;">Uber</a>
+                                        <a href="{url}" target="_blank" class="action-btn btn-outline" style="flex: 0.6;">Menu</a>
+                                    </div>
+                                </div>
+                                """
                             
-                            url = "#"
-                            for db_rest in retrieved_docs:
-                                if r_name.lower() in db_rest.get("name", "").lower():
-                                    url = db_rest.get("url", "#")
-                                    break
-                                    
-                            maps_url = f"https://www.google.com/maps/search/{r_name.replace(' ', '+')}+{r_location.replace(' ', '+')}"
-                            uber_url = f"uber://?action=setPickup&pickup=my_location&dropoff[nickname]={r_name.replace(' ', '%20')}"
+                            st.markdown(f'<div class="card-container">{all_cards_html}</div>', unsafe_allow_html=True)
+                            st.markdown(f'<div style="margin-top: 25px; font-style: italic; color: rgba(255,255,255,0.7);">{llm_json.get("outro", "")}</div>', unsafe_allow_html=True)
+                            st.balloons()
                             
-                            html_blocks.append(f"""
-                            <div class="recommendation-card">
-                                <div class="card-header">
-                                    <h3>{r_name}</h3>
-                                    <div class="card-meta">{r_location} • {r_cuisine}</div>
-                                </div>
-                                <div class="card-stats">
-                                    <div class="stat-badge">⭐ {r_rating}</div>
-                                    <div class="stat-price">Approx ₹{r_cost} for two</div>
-                                </div>
-                                <div class="ai-why-section">
-                                    <span class="ai-why-label">AI WHY</span>
-                                    <div class="ai-why-text">{reason}</div>
-                                </div>
-                                <div class="card-actions">
-                                    <a href="{maps_url}" target="_blank" class="action-btn btn-maps">📍 Open in Maps</a>
-                                    <a href="{uber_url}" class="action-btn btn-outline" style="flex: 0.6;">Uber</a>
-                                    <a href="{url}" target="_blank" class="action-btn btn-outline" style="flex: 0.6;">Menu</a>
-                                </div>
-                            </div>
-                            """)
-                        html_blocks.append('</div>')
-                        st.markdown("\n".join(html_blocks), unsafe_allow_html=True)
-                        st.markdown(f'<div style="margin-top: 25px; font-style: italic; color: rgba(255,255,255,0.7);">{llm_json.get("outro", "")}</div>', unsafe_allow_html=True)
-                        st.balloons()
+                    except json.JSONDecodeError:
+                        # Fallback if the LLM output something slightly malformed but readable
+                        st.info("The AI generated a response, but it wasn't in the expected format. Showing raw content:")
+                        st.markdown(f'<div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px;">{response_text}</div>', unsafe_allow_html=True)
                         
             except Exception as e:
                 st.error(f"Failed to generate recommendation: {str(e)}")
