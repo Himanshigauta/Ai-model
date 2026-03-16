@@ -3,6 +3,11 @@ import json
 import time
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+# Load local .env if it exists
+load_dotenv()
+load_dotenv(Path(__file__).parent / "phase3_llm_integration" / ".env")
 
 # Import direct logic modules
 from phase2_retrieval.retrieval import get_recommendations
