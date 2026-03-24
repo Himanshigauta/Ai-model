@@ -54,13 +54,18 @@ def get_recommendations(
     # Sort first by highest rating, then lowest cost
     query += " ORDER BY rating DESC, cost ASC"
     
-    if top_n is not None:
-        query += " LIMIT ?"
-        params.append(top_n)
-        
     df = pd.read_sql_query(query, conn, params=params)
     conn.close()
     
+    # Drop duplicates to ensure unique recommendations based on 'name'
+    if not df.empty and 'name' in df.columns:
+        df['name_clean'] = df['name'].str.strip().str.lower()
+        df = df.drop_duplicates(subset=['name_clean'], keep='first')
+        df = df.drop(columns=['name_clean'])
+        
+    if top_n is not None:
+        df = df.head(top_n)
+        
     return df
 
 if __name__ == "__main__":

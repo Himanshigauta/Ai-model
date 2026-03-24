@@ -46,7 +46,7 @@ def construct_prompt(user_preferences, retrieved_restaurants):
         
     prompt += (
         "\nBased on the above options, write a friendly recommendation for the user. "
-        "You MUST pick the top 4 best matching restaurants from the list provided. "
+        "You MUST recommend up to 4 best matching unique restaurants from the list provided. DO NOT duplicate any restaurant names in your output list. "
         "However, you MUST return your response as a valid JSON object with the following exact structure and no other text:\n"
         "{\n"
         "  \"intro\": \"A friendly short 2-sentence introduction.\",\n"
