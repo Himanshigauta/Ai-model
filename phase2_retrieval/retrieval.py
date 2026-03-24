@@ -44,8 +44,15 @@ def get_recommendations(
         params.append(f"%{cuisine}%")
         
     if max_price is not None:
-        query += " AND cost > 0 AND cost <= ?"
-        params.append(max_price)
+        if max_price <= 500:
+            query += " AND cost > 0 AND cost <= 500"
+        elif max_price <= 1000:
+            query += " AND cost > 500 AND cost <= 1000"
+        elif max_price <= 2500:
+            query += " AND cost > 1000 AND cost <= 2500"
+        else:
+            query += " AND cost > 0 AND cost <= ?"
+            params.append(max_price)
         
     if min_rating is not None:
         query += " AND rating >= ?"
